@@ -33,7 +33,7 @@ const jsx = (
     <h1>买买买</h1>
     <a href="https://www.baidu.com/">baidu</a>
     <FunctionComponent name="好好" />
-    {/* <ClassComponent name="class" /> */}
+     <ClassComponent name="class" /> 
     <ul>
 
       <>

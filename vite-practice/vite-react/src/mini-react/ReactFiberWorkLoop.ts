@@ -1,4 +1,4 @@
-import { updateFunctionComponent, updateHostComponent, updateFragmentComponent } from "./ReactFiberReconciler"
+import { updateFunctionComponent, updateHostComponent, updateFragmentComponent, updateClassComponent } from "./ReactFiberReconciler"
 import { isFn, isStr } from "./utils"
 
 let wipRoot = null
@@ -29,7 +29,7 @@ function workLoop(IdleDeadLine) {
 function performUnitOfWork(wip) {
     const {type} = wip
     if (isFn(type)) {
-        updateFunctionComponent(wip)
+        type.prototype.isReactComponent ? updateClassComponent(wip) : updateFunctionComponent(wip)
     } else if (isStr(type)) {
         updateHostComponent(wip)
     } else {

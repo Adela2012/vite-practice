@@ -1,6 +1,12 @@
 import { createFiber } from "./fiber"
 import { isStr, updateNode } from "./utils"
 
+export function updateClassComponent(wip) {
+    const {type, props} = wip
+    const instance = new type(props)
+    reconcileChildren(wip, instance.render())
+}
+
 export function updateFunctionComponent(wip) {
     const {type, props} = wip
     const children = type(props)
