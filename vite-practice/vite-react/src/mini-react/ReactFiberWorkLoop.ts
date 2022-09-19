@@ -1,5 +1,6 @@
 import { updateFunctionComponent, updateHostComponent, updateFragmentComponent, updateClassComponent } from "./ReactFiberReconciler"
-import { isFn, isStr } from "./utils"
+import { scheduleCallback, shouldYield } from "./scheduler"
+import { isFn, isStringOrNumber, Placement, Update, updateNode } from "./utils"
 
 let wipRoot = null
 let nextUnitOfWork = null
@@ -7,17 +8,20 @@ let nextUnitOfWork = null
 
 
 export function scheduleUpdateOnFiber(fiber) {
+    fiber.alternate = { ...fiber }
     wipRoot = fiber
     wipRoot.sibling = null
     nextUnitOfWork = wipRoot
 
+
+    scheduleCallback(workLoop)
 }
 
-requestIdleCallback(workLoop)
+// requestIdleCallback(workLoop)
 
 
-function workLoop(IdleDeadLine) {
-    while(nextUnitOfWork && IdleDeadLine.timeRemaining() > 0) {
+function workLoop() {
+    while (nextUnitOfWork && !shouldYield()) {
         nextUnitOfWork = performUnitOfWork(nextUnitOfWork)
     }
 
@@ -27,10 +31,10 @@ function workLoop(IdleDeadLine) {
 }
 
 function performUnitOfWork(wip) {
-    const {type} = wip
+    const { type } = wip
     if (isFn(type)) {
         type.prototype.isReactComponent ? updateClassComponent(wip) : updateFunctionComponent(wip)
-    } else if (isStr(type)) {
+    } else if (isStringOrNumber(type)) {
         updateHostComponent(wip)
     } else {
         updateFragmentComponent(wip)
@@ -41,7 +45,7 @@ function performUnitOfWork(wip) {
     }
 
     let cur = wip
-    while(cur) {
+    while (cur) {
         if (cur.sibling) {
             return cur.sibling
         }
@@ -60,10 +64,16 @@ function commitRoot() {
 function commitWorker(fiber) {
     if (!fiber) return
 
-    const {stateNode} = fiber
+    const { flags, stateNode } = fiber
     let parentNode = getParentNode(fiber)
 
-    if (stateNode) parentNode.appendChild(stateNode)
+    if (flags && Placement && stateNode) {
+        parentNode.appendChild(stateNode)
+    }
+
+    if (flags & Update && stateNode) {
+        updateNode(stateNode, fiber.alternate.props, fiber.props)
+    }
 
     commitWorker(fiber.child)
     commitWorker(fiber.sibling)
@@ -71,9 +81,10 @@ function commitWorker(fiber) {
 
 function getParentNode(fiber) {
     let next = fiber.return
-    while(!next.stateNode) {
+    while (!next.stateNode) {
         next = next.return
     }
 
     return next.stateNode
 }
+

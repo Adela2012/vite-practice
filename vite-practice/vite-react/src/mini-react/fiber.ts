@@ -1,3 +1,4 @@
+import { Placement } from './utils';
 export function createFiber(vnode, returnFiber) {
     const fiber = {
         type: vnode.type,
@@ -6,7 +7,9 @@ export function createFiber(vnode, returnFiber) {
         stateNode: null,
         child: null,
         sibling: null,
-        return: returnFiber
+        return: returnFiber,
+        flags: Placement,
+        alternate: null
     }
     return fiber
 }
